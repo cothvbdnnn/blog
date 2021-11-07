@@ -1,8 +1,7 @@
 # Sử dụng optional chaning trong template của Vue?
 
-## Trường hợp lỗi hiển thị
-
-Ví dụ khi chúng ta muốn hiển thị giá trị trong object ra template
+## Tại sao cần sử dụng
+Khi chúng ta muốn hiển thị giá trị trong object ra template
 ``` html
 <template>
   <p>{{ data.user.name }}</p>
@@ -33,7 +32,7 @@ Nhưng mỗi lần phải check như vậy đối với các thuộc tính đư�
 </template>
 ```
 Rất dài dòng và mệt mỏi
-## Optional chaining là gì?
+## Optional chaining là gì
 Được giới thiệu trong ES2020 của javascript, optional chaining ```?.``` giúp cho việc truy cập đến các phần tử trong object ngay cả khi object không tồn tại
 
 Có 3 kiểu cú pháp trong đấy 2 kiểu gọi đến phần tử và 1 kiểu gọi đến phương thức trong object
@@ -50,11 +49,11 @@ SyntaxError: Unexpected token
 ```
 Nên mình sẽ hướng dẫn cách cài đặt để có thể sử dụng optional chaining trên template của Vue 2
 
-## Cài đặt biên dịch Optional Chaining
+## Cài đặt biên dịch
 
 Sử dụng thư viện ```vue-template-babel-compiler``` để biên dịch
 
-Cài đặt 
+Chạy lệnh để cài đặt
 ```
 yarn add -D vue-template-babel-compiler
 ```
@@ -107,16 +106,16 @@ module.exports = {
 ```
 Lưu ý: phiên bản của vue-jest phải lớn hơn hoặc bằng 4.0.0 và jest nhỏ hơn hoặc bằng 26.6.3.
 
-## Sử dụng Optional Chaining với template
+## Sử dụng với template
 
-Và bây giờ chúng ta chỉ cần viết thế này là trình duyệt không báo lỗi khi khi ```user``` không tồn tại nữa
+Và bây giờ chúng ta chỉ cần viết thế này là trình duyệt không báo lỗi ```Error in render: "TypeError: Cannot read property 'name' of undefined"``` nữa
 ``` html
 <template>
   <p>{{ data?.user?.name }}</p>
 </template>
 ```
 
-Nhưng trên màn hình lại hiển thị ra ```undefined```
+Nhưng trên màn hình lúc này thẻ p sẽ render ra ```undefined```
 
 Có một cách mọi người thường dùng là kết hợp với ```nullish coalescing operator``` để hiển thị ra giá trị rỗng thay vì ```undefined```
 
@@ -125,7 +124,7 @@ Có một cách mọi người thường dùng là kết hợp với ```nullish 
   <p>{{ data?.user?.name ?? '' }}</p>
 </template>
 ```
-Cách hay hơn là sử dụng ```v-text```, nó sẽ kiểm tra giá thị rồi mới render ra dom còn không thì sẽ không render, một directive rất hay nhưng lại bị rất nhiều người bỏ qua
+Cách hay hơn là sử dụng ```v-text```, nó sẽ kiểm tra giá thị rồi mới render ra thẻ p còn không thì sẽ không render, một directive rất hay nhưng lại bị rất nhiều người bỏ qua
 
 ``` html
 <template>
