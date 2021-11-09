@@ -1,9 +1,12 @@
-# Viết test dễ dàng hơn
+# Viết test dễ dàng hơn với thứ này
 
 ## Nhìn qua về unit test
+
 Bài viết này phù hợp với những người đã biết về unit test, nên mình sẽ không giải thích các khái niệm căn bản nữa và sẽ đi thẳng vào những phần chính
 
-Ví dụ có một component có sử dụng store và router
+Unit test giống như chúng ta viết lại một lần component đấy, nhưng khi ứng dụng càng lớn, nhiều thư viện được sử dụng như Vuex, Vue Router... nó sẽ khiên cho các file test trở nên rất dài, đôi khi còn dài hơn cả component cần test
+
+Ví dụ về một component có sử dụng store và router như thế này
 ``` html
 <!-- CreateTodo.vue -->
 <script>
@@ -22,7 +25,7 @@ export default {
 }
 </script>
 ```
-Thì lúc test chúng ta sẽ cần setup router và store để có thể test được component này
+Khi tiến hành test chúng ta sẽ cần setup router và store để có thể test được component này
 ``` javascript
 // CreateTodo.spec.js
 import { shallowMount, createLocalVue } from '@vue/test-utils'
@@ -34,6 +37,7 @@ import Vuex from 'vuex'
 const localVue = createLocalVue()
 localVue.use(VueRouter)
 localVue.use(Vuex)
+// Tạo localVue sử dụng VueRouter và Vuex
 
 const router = new VueRouter({
   routes: [
@@ -51,7 +55,7 @@ const store = new Vuex.Store({
     user: userModule
   }
 })
-// Tạo store 
+// Tạo store với user module
 
 let wrapper
 beforeEach(() => {
@@ -60,7 +64,7 @@ beforeEach(() => {
     router,
     store
   })
-  // Dùng shallowMount tạo một wrapper với router và store để sử dụng
+  // Tạo một wrapper từ shallowMount với router và store để sử dụng
 })
 
 afterEach(() => {
@@ -71,8 +75,7 @@ describe('Test CreateTodo', () => {
   ...
 })
 ```
-Như vậy, khi mỗi lần test các component đều phải setup lại những phần này, nên bài viết này mình sẽ cấu trúc lại để có thể viết test một cách ngắn ngọn và đơn giản hơn
-
+Như vậy, khi có nhiều component sử dụng store và router, đều phải setup lại những phần router và store lặp đi lặp lại thế này, nên bài viết này mình sẽ cấu trúc lại để có thể viết test một cách ngắn ngọn và đơn giản hơn
 ## Tổ chức thư mục
 ```
 test
@@ -81,17 +84,21 @@ test
     |   └── CreateTodo.spec.js
     └── methods.js                 
 ```
+## Tạo các function dùng lại
 ``` javascript
 // methods.js
+import { shallowMount, mount, createLocalVue } from '@vue/test-utils';
+// có ba thứ cần dùng là shallowMout, mount và createLocalVue
 import Vuex from 'vuex';
 import VueRouter from 'vue-router';
-import { shallowMount, mount, createLocalVue } from '@vue/test-utils';
 import { routes } from '@/router/index';
 import user from '@/store/modules/user';
+// import routes và các module từ router và store của bạn
 
 export const localVue = createLocalVue();
 localVue.use(VueRouter);
 localVue.use(Vuex);
+// Tạo localVue sử dụng VueRouter và Vuex
 
 export const createStore = (customModule = {}) => new Vuex.Store({
   modules: {
@@ -99,6 +106,8 @@ export const createStore = (customModule = {}) => new Vuex.Store({
     ...customModule,
   },
 });
+// createStore đã được cấu hình sẵn với các module được import từ store của bạn 
+// Có thể custom với giá trị đầu vào nhận một custom module có kiểu dữ liệu object, sẽ được merge với các module mặc định
 
 export const createRouter = (customRoute = []) => new VueRouter({
   routes: [
@@ -106,27 +115,23 @@ export const createRouter = (customRoute = []) => new VueRouter({
     ...customRoute
   ],
 });
+// createRouter đã được cấu hình sẵn với các routes được import từ router của bạn
+// Có thể custom với giá trị đầu vào nhận vào một custom route có kiểu dữ liệu array chứ các object routes, sẽ được merge với các routes mặc định
 
-export const createMock = ((mock = {}) => ({
+
+export const createMock = ((customMock = {}) => ({
   // thêm các mock mặc định ở đây
   $t: () => '', // ví dụ với i18n
-  ...mock,
+  ...customMock,
 }));
+// createMock với các mock mặc định và customMock dùng để custom
 
 export const createStub = ((customStub = {}) => ({
   // thêm các stub mặc định ở đây
   'ButtonComponent': { template: '<div></div>' },
   ...customStub,
 }));
-
-export const createDeep = (component, options = {}) => mount(component, {
-  stubs: createStub(),
-  store: createStore(),
-  router: createRouter(),
-  mocks: createMock(),
-  localVue,
-  ...options,
-});
+// createStub với các stub mặc định và customStub dùng để custom
 
 export const createShallow = (component, options = {}) => shallowMount(component, {
   stubs: createStub(),
@@ -136,5 +141,94 @@ export const createShallow = (component, options = {}) => shallowMount(component
   localVue,
   ...options,
 });
+// Khởi tạo hàm createShallow, hàm này sẽ trả về hàm shallowMount của vue-test-utils
+// Nó đã được nhận vào sẵn các stubs, store, router, mocks từ các hàm bên trên
+// Và đầu vào sẽ nhận 2 giá trị là component và object chứa các options như shallowMount 
 
+export const createDeep = (component, options = {}) => mount(component, {
+  stubs: createStub(),
+  store: createStore(),
+  router: createRouter(),
+  mocks: createMock(),
+  localVue,
+  ...options,
+});
+// Tương tự như createShallow chỉ khác là sử dụng mount thay vì shallow
+
+```
+## Hướng dẫn sử dụng
+Và sau đó khi sử dụng chỉ cần dùng
+
+``` javascript
+import CreateTodo from '@/components/CreateTodo'
+import { createShallow } from '../methods'
+
+let wrapper
+beforeEach(() => {
+  wrapper = createShallow(CreateTodo)
+})
+
+afterEach(() => {
+  wrapper.destroy()
+})
+
+describe('Test CreateTodo', () => {
+  ...
+})
+```
+Từ giờ thay vì gọi hàm shallowMount từ vue-test-utils chúng ta chỉ cần sử dụng createShallow được viết sẵn từ file methods.js
+
+wrapper được tạo từ createShallow đã có đầy đủ store, router, mock và stub...
+## Tùy chỉnh 
+
+``` javascript
+import { createShallow, createRouter } from '../methods'
+import TodoComponent from '@/components/Todo'
+
+const customRouter = [
+  {
+    path: '/custom-router',
+    name: 'CustomRouter',
+    component: () => import('@/components/CustomRouter.vue')
+  }
+]
+
+const router = createRouter(customRouter)
+// createRouter() sẽ merge customRouter với các router hiện tại
+
+let wrapper
+beforeEach(() => {
+  wrapper = createShallow(TodoComponent, {
+    router
+  })
+})
+```
+
+``` javascript 
+import { createShallow, createStore } from '../methods'
+import TodoComponent from '@/components/Todo'
+import todo from '@/store/modules/todo'
+
+const state = {
+  todos: [
+    { title: "newTodo" }
+  ]
+}
+// Tạo state với dữ liệu mẫu để test
+
+const store = createStore({
+  todo: { 
+    ...todo, 
+    state 
+  }
+})
+// Replace state và giữ lại getters, mutations, actions
+// createStore() sẽ merge các module vào vuex
+
+let wrapper
+beforeEach(() => {
+  wrapper = createShallow(TodoComponent, {
+    store
+  })
+})
 ```

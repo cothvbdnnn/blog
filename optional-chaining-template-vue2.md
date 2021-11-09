@@ -2,100 +2,107 @@
 
 ## Cách truyền thống để render template từ một nested object trong Vuejs
 
-Khi chúng ta muốn hiển thị giá trị từ một nested object ra template
+Như chúng ta đã biết, để hiển thị giá trị của một object trong template của Vuejs thì chúng ta thường sử dụng cú pháp nội suy (text interpolation) `{{ }}` như sau:
 ``` html
 <template>
   <p>{{ data.user.name }}</p>
 </template>
 ```
-Trong trường hợp này nếu thuộc tính ```user``` không tồn tại, trình duyệt sẽ báo lỗi 
-```
-Error in render: "TypeError: Cannot read property 'name' of undefined"
-```
-Và nó có thể khiến cho một một số component của thư viện UI không hiển thị, thậm chí là ứng dụng chết ngay lập tức
+Tuy nhiên, vấn đề đặt ra ở đây là ở đây là trong trường hợp giá trị chúng ta cần hiển thị lại nằm trong một nested object (object lồng nhau), khi một thuộc tính đứng trước nó không tồn tại sẽ dẫn đến lỗi, không hiển thị được template và ứng dụng sẽ bị chết ngay.
 
-Vậy nên có một giải pháp đó là check if
+Trong ví dụ trên, chúng ta muốn hiển thị giá trị `name` của object `data`, nhưng nếu thuộc tính `user` đứng trước nó không tồn tại thì trình duyệt sẽ báo lỗi `Error in render: "TypeError: Cannot read property 'name' of undefined"`.
+
+Giải pháp thường hay được sử dụng để hiển thị nested object trong template mà không gây lỗi đó là sử dụng directive `v-if` của Vuejs để kiểm tra sự tồn tại của các thuộc tính trong nested object.
+
+Chẳng hạn trong ví dụ trên, chúng ta sẽ đặt `v-if` trên template để kiểm tra object `data`, nếu object `data` có thuộc tính `user` và `user` có thuộc tính `name` thì giá trị `name` mới được hiển thị trên trình duyệt.
 ``` html
-<template>
-  <p>{{ data.user && data.user.name }}</p>
+<template v-if=”data.user && data.user.name”>
+  <p>{{ data.user.name }}</p>
 </template>
 ```
-Nhưng mỗi lần phải check như vậy đối với các thuộc tính được lồng trong nhiều object thì nó sẽ trở thành như này
+Chúng ta thấy rằng, giải pháp trên có thể rất tiện dụng trong trường hợp nested object của chúng ta chỉ có độ sâu khoảng một đến hai cấp.
+
+Trong trường hợp nested object được lồng nhau nhiều cấp thì chúng ta sẽ phải viết điều kiện `v-if` cho nhiều cấp, chẳng hạn như trường hợp dưới đây.
 ``` html
-<template>
-  <p>
-    {{ 
-      data.obj1
-      && data.obj1.obj2
-      && data.obj1.obj2.obj3
-      && data.obj1.obj2.obj3.obj4
-      ...
-    }}
-  </p>
+<template v-if=”data.obj1
+  && data.obj1.obj2
+  && data.obj1.obj2.obj3
+  && data.obj1.obj2.obj3.obj4”
+>
+  <p>{{ data.obj1.obj2.obj3.obj4}}</p>
 </template>
 ```
-Rất dài dòng và mệt mỏi khi mỗi object đều phải kiểm tra như thế này, vậy nên toán tử Optional Chaining đã được sinh ra và mình sẽ giới thiệu kỹ ở phần dưới
+Như vậy có thể thấy code của chúng ta sẽ trở nên dài dòng, khó theo dõi và có thể lỗi khi chúng ta viết không đúng thứ tự các thuộc tính bên trong object.
+
+Để khắc phục được những bất cập ở trên, chúng ta có thể sử dụng một toán tử khác mới của javascript là toán tử `?.` (Optional Chaining)
 ## Giới thiệu về toán tử optional chaining ?.
+Được giới thiệu trong ES2020, toán tử `?.` giúp giải quyết vấn đề truy cập đến các thuộc tính trong object ngay cả khi object hoặc thuộc tính bên trong nó không tồn tại. Thông thường, có 3 kiểu cú pháp để sử dụng toán tử `?.` như sau
 
-Được giới thiệu trong ES2020 của javascript, optional chaining ```?.``` giúp giải quyết vấn đề  truy cập đến các thuộc tính trong object ngay cả khi object không tồn tại
-
-Có 3 kiểu cú pháp đó là
-
+Sử dụng để truy cập thuộc tính của object:
 ``` javascript
-// sử dụng khi truy cập thuộc tính của object
-data?.obj
-
-// sử dụng với biểu thức là dấu ngoặc vuông
-data?.[obj]
-
-// sử dụng để gọi hàm khi chưa chắc chắn hàm đó có tồn tại hay không
+let abc = data?.obj.abc
+```
+Sử dụng để truy cập thuộc tính của mảng:
+``` javascript
+let abc = data?.[obj].abc
+```
+Sử dụng để gọi hàm của một object ngay cả khi không chắc chắn hàm đó có tồn tại hay không
+``` javascript
 data.method?.()
 ```
-Nó sẽ không báo lỗi trên log và sẽ trả về  ```undefined``` nếu các phần tử bên trái ```?.``` là nullish
 
-## Cách sử dụng và cấu hình toán tử ?. trong ứng dụng Vuejs
-
-### Cách dùng
-Và bây giờ chúng ta chỉ cần viết ngắn gọn thế này
+Áp dụng toán tử `?.` vào trường hợp hiển thị nested object trong template của Vuejs, chúng ta sẽ có thể viết ngắn gọn và an toàn như sau:
 ``` html
 <template>
   <p>{{ data?.user?.name }}</p>
 </template>
 ```
-Trình duyệt đã không còn báo lỗi ```Error in render: "TypeError: Cannot read property 'name' of undefined"``` nữa
+Trình duyệt sẽ không còn báo lỗi `Error in render: "TypeError: Cannot read property 'name' of undefined"` nữa.
 
-Nhưng trên màn hình lúc này thẻ p sẽ render ra ```undefined```
+Tuy nhiên, trong trường hợp mà thuộc tính `data` hoặc `user` không tồn tại, chúng ta thấy giá trị `undefined` sẽ được hiển thị ra trên trình duyệt, như vậy thì sẽ không tốt cho trải nghiệm của người dùng.
 
-Có một cách mọi người thường dùng là kết hợp với ```nullish coalescing operator``` để hiển thị ra giá trị rỗng thay vì ```undefined```
+Để tránh vấn đề này, chúng ta có thể set giá trị rỗng `“”` hoặc một giá trị mặc định nào đó sẽ thay thế `undefined` bằng cách thêm giá trị đó vào sau 2 dấu `??` ngay phía sau cùng của nested object như sau:
 
+Set giá trị rỗng “”
 ``` html
 <template>
-  <p>{{ data?.user?.name ?? '' }}</p>
+  <p>{{ data?.user?.name ?? ”” }}</p>
 </template>
 ```
-Cách hay hơn là sử dụng ```v-text```, nó sẽ kiểm tra giá thị rồi mới render ra thẻ p còn không thì sẽ không render, một directive rất hay nhưng lại bị rất nhiều người bỏ qua
-
+Set giá trị mặc định “abc”
 ``` html
 <template>
-  <p v-text="data?.user?.name" />
+  <p>{{ data?.user?.name ?? ”abc” }}</p>
 </template>
 ```
-Như vậy khi thuộc tính không tồn tại, ứng dụng cũng không báo lỗi và cũng sẽ không render ra các thẻ ```undefined``` nữa, một sự kết hợp hoàn hảo
+Khi sử dụng các ở trên, thẻ `p` vẫn được render và hiển thị ra trong template của Vuejs ngay cả khi chúng ta set giá trị mặc định cho nó là rỗng.
 
-### Cài đặt sử dụng đối với Vue 2
-Hiện tại optional chaining mới chỉ được hỗ trợ trên template của Vue 3, còn Vue 2 khi sử dụng sẽ báo lỗi
+Có một cách hay hơn đó là sử dụng kết hợp toán tử `?.` và directive `v-text` của Vuejs, trong ví dụ ở trên, thẻ `p` sẽ chỉ được render và hiển thị trong template của Vuejs khi giá trị của thuộc tính name không phải là undefined hoặc được set giá trị mặc định khác rỗng.
+
+Có thể thấy v-text là một directive rất hay của Vuejs nhưng lại bị rất nhiều người bỏ qua. Ví dụ trên của chúng ta sẽ trở thành.
+``` html
+<template>
+  <p v-text="data?.user?.name"></p>
+</template>
 ```
-SyntaxError: Unexpected token 
-```
-Nên mình sẽ hướng dẫn cách cài đặt để có thể sử dụng optional chaining trên template của Vue 2
+Kiểm tra trình duyệt, chúng ta thấy trong trường hợp object `data` hoặc thuộc tính `user` không tồn tại thì vẫn không báo lỗi, thẻ `p` sẽ chỉ render trong trường hợp thuộc tính `name` có giá trị cụ thể.
 
-Sử dụng thư viện ```vue-template-babel-compiler``` để biên dịch
+Code trở nên ngắn gọn, dễ theo dõi và an toàn.
 
-Chạy lệnh để cài đặt
+Như vậy rõ ràng, chúng ta thấy sử dụng toán tử `?.` đi kèm với directive `v-text` để hiển thị giá trị của một nested object chính là một sự kết hợp quá hoàn hảo.
+
+Do toán tử `?.` là một toán tử khá mới, được giới thiệu trong ES2020 vào nên có thể một số phiên bản trình duyệt cũ từ trước năm 2019 không hỗ trợ toán tử này.
+
+Ngoài ra, hiện chỉ có phiên bản Vue 3 hỗ trợ toán tử này, do vậy, để có thể sử dụng được toán tử này trên phiên bản Vue 2 và an toàn trên các trình duyệt cũ, chúng ta cần cài đật đối với Vuejs 2
+
+## Cài đặt và cấu hình cho Vuejs 2
+
+Trước hết, cài đặt thư viện `vue-template-babel-compiler` để biên dịch code sử dụng toán tử `?.` Chạy lệnh để cài đặt
 ```
 yarn add -D vue-template-babel-compiler
 ```
-Cấu hình tại vue.config.js, sử dụng vue-template-babel-compiler để giúp webpack biên dịch
+
+Chỉnh sửa lại file `vue.config.js`, sử dụng `vue-template-babel-compiler` để giúp webpack biên dịch
 ``` javascript
 // vue.config.js
 module.exports = {
@@ -110,7 +117,7 @@ module.exports = {
   }
 }
 ```
-Hoặc nếu cấu hình tại webpack.config.js
+Hoặc có thể cấu hình tại file webpack.config.js
 ``` javascript
 // webpack.config.js
 module: {
@@ -123,9 +130,9 @@ module: {
       },
     },
   ],
-},
+}
 ```
-Với trường hợp có sử dụng Unit test với Jest, lúc chạy test sẽ báo lỗi ```Unexpected token```, nên cũng cần phải cấu hình jest.config để có thể biên dịch được trên môi trường test
+Với cấu hình như trên thì chúng ta đã có thể sử dụng được toán tử `?.` trong Vuejs 2. Trong trường hợp cần viết unit test bằng jest cho các hàm hoặc các Vue template mà có sử dụng toán tử `?.` chúng ta cần cấu hình thêm `jest.config.js` để có thể biên dịch được trên môi trường test như sau.
 ``` javascript
 // jest.config.js
 module.exports = {
@@ -140,12 +147,10 @@ module.exports = {
       },
     },
   },
-};
+}
 ```
 Lưu ý: phiên bản của vue-jest phải lớn hơn hoặc bằng 4.0.0 và jest nhỏ hơn hoặc bằng 26.6.3.
 
 ## Kết luận
 
-Chúng ta đã thấy được các ưu điểm được kể trên, phương thức sử dụng rất dễ dàng và ngắn gọn, giúp cho ứng dụng hạn chế tối đa các lỗi vặt không đáng có
-
-Tuy nhiên nó cũng có một số hạn chế vì là ra mắt trong ES2020 nên vẫn hỗ trợ đối với các các trình duyệt cũ, cần cân nhắc trước khi sử dụng
+Mặc dù có một chút khó khăn khi config để có thể sử dụng được toán tử `?.` trên Vuejs 2, nhưng chúng ta có thừa lý do để thực hiện vì nhiều lợi ích và ưu điểm vượt trội mà toán tử `?.` mang lại cho chúng ta khi được sử dụng trong Vuejs như đã phân tích ở trên.
