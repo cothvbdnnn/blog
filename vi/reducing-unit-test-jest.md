@@ -176,11 +176,15 @@ describe('Test CreateTodo', () => {
   ...
 })
 ```
+So sánh với ví dụ ban đầu thì số lượng code đã được giảm thiểu rõ rệt
+
 Từ giờ thay vì gọi hàm shallowMount từ vue-test-utils chúng ta chỉ cần sử dụng createShallow được viết sẵn từ file methods.js
 
 wrapper được tạo từ createShallow đã có đầy đủ store, router, mock và stub...
 ## Tùy chỉnh 
 
+Những trường hợp cần tùy chỉnh trong quá trình test sẽ xảy ra không nhiều. Mặc dù vậy, các function vẫn cho phép chúng ta sử dụng trong những trường hợp cần phải tùy chỉnh 
+### Router
 ``` javascript
 import { createShallow, createRouter } from '../methods'
 import TodoComponent from '@/components/Todo'
@@ -192,6 +196,7 @@ const customRouter = [
     component: () => import('@/components/CustomRouter.vue')
   }
 ]
+// Tạo một custom router
 
 const router = createRouter(customRouter)
 // createRouter() sẽ merge customRouter với các router hiện tại
@@ -201,9 +206,10 @@ beforeEach(() => {
   wrapper = createShallow(TodoComponent, {
     router
   })
+  // truyền options là router mới sẽ thay thế router cũ
 })
 ```
-
+### Store
 ``` javascript 
 import { createShallow, createStore } from '../methods'
 import TodoComponent from '@/components/Todo'
@@ -230,5 +236,45 @@ beforeEach(() => {
   wrapper = createShallow(TodoComponent, {
     store
   })
+  // truyền options là store mới sẽ thay thế store cũ
 })
 ```
+### Mock
+``` javascript 
+import { createShallow, createMock } from '../methods'
+import TodoComponent from '@/components/Todo'
+
+const mocks = createMock({
+  $t: () => '',
+})
+// createMock() sẽ merge các mock mới với các mock mặc định
+
+let wrapper
+beforeEach(() => {
+  wrapper = createShallow(TodoComponent, {
+    mocks
+  })
+  // truyền options là mocks mới sẽ thay thế mocks cũ
+})
+```
+### Stub
+``` javascript 
+import { createShallow, createStub } from '../methods'
+import TodoComponent from '@/components/Todo'
+
+const stubs = createStub({
+  'CustomStub': { template: '<div></div>' },
+})
+// createStub() sẽ merge các stubs mới với các stubs mặc định
+
+let wrapper
+beforeEach(() => {
+  wrapper = createShallow(TodoComponent, {
+    stubs
+  })
+  // truyền options là stubs mới sẽ thay thế stubs cũ
+})
+```
+## Kết luận
+
+Đây là một phương pháp giúp chúng ta giảm thiểu số lượng code cần viết mỗi khi test một các đơn giản và ngắn gọn
