@@ -3,7 +3,7 @@
 # Cách truyền thống để render một nested object
 Như chúng ta đã biết, để hiển thị giá trị của một object trong template của Vuejs thì chúng ta thường sử dụng text interpolation `{{ }}` như sau:
 ``` html
-<template>
+<template>`
   <p>{{ data.user.name }}</p>
 </template>
 ```
