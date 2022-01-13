@@ -40,14 +40,14 @@ Giải pháp chính là sử dụng render props như sau
 // Counter.vue
 
 <template>
-  // Truyền biến count vào hàm render, nó sẽ callback và trả về giá trị
+  // Hàm render sẽ nhận giá trị đầu vào là count
   // Directive v-html để xuất ra html
   <div v-html="render(count)" />
 </template>
 
 <script>
 export default {
-  // Tạo một prop render với kiểu Function
+  // Tạo một prop render với kiểu giá trị là Function
   props: {
     render: {
       type: Function,
@@ -74,7 +74,7 @@ Vậy là đã xong component Counter.vue, bây giờ sẽ đến cách dùng n�
 
 ``` javascript
 <template>
-  // Truyền prop render là một function trả về html
+  // Truyền prop render là các hàm
   <div>
     <Counter :render="renderH1" />
     <Counter :render="renderP" />
@@ -89,7 +89,7 @@ export default {
     Counter,
   },
   methods: {  
-    // Các function này sẽ nhận biến count từ component Counter và render ra các html tùy ý
+    // Các function này sẽ nhận biến count từ component Counter và return về các html
     renderH1(count) {
       return (
         `<h1>h1 Counter: ${ count }</h1>`
